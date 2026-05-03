@@ -389,7 +389,7 @@ def _fetch_weather() -> dict | None:
             return _WEATHER_CACHE.get("data")
 
 
-# ── Forecast algorithm ─────────────────────────────────────────────────────────────────────
+# ── Forecast algorithm ───────────────────────────────────────────────────────────────────
 
 def _forecast_kwh(target: date, weather_day: dict) -> float | None:
     """
@@ -500,7 +500,9 @@ def _live_signed(power: dict) -> str:
     return f"+{power.get('pv_kw', 0):.2f} kW"
 
 
-def _battery_hours_str(soc: float, battery_kw: float, consumption_kwh: float, hours_elapsed: float) -> str:
+def _battery_hours_str(
+    soc: float, battery_kw: float, consumption_kwh: float, hours_elapsed: float
+) -> str:
     available = SOLAR_BATTERY_KWH * soc / 100
     if battery_kw > 0.1:
         rate = battery_kw
@@ -512,14 +514,14 @@ def _battery_hours_str(soc: float, battery_kw: float, consumption_kwh: float, ho
     return f"{hours} Std."
 
 
-def _day_label(i: int, d: date) -> str:
+def _day_label(i: int) -> str:
     if i == 0:
         return "Heute"
     if i == 1:
         return "Morgen"
     if i == 2:
         return "Übermorgen"
-    return d.strftime("%d.%m.%Y")
+    return "Der Tag danach"
 
 
 # ── RSS feed builder ─────────────────────────────────────────────────────────────────────
@@ -589,7 +591,7 @@ def _build_feed() -> str:
     fc_lines = []
     for i in range(4):
         target = today + timedelta(days=i)
-        label = _day_label(i, target)
+        label = _day_label(i)
         wd = weather_days[i] if i < len(weather_days) else {}
         est = _forecast_kwh(target, wd)
         val = f"{est} kWh" if est is not None else "k.A."
@@ -597,7 +599,11 @@ def _build_feed() -> str:
     item_fc = _item(title_fc, "\n".join(fc_lines), "solar-vorhersage")
 
     # —— Item 3: Sonnenschutz ———————————————————————————————————————————
-    uv = _uv_data(weather, pv_kw) if weather else {"title": "Sonnenschutz", "temperature": 0, "cloudcover": 0, "current_uv": 0, "max_uv": 0}
+    uv = (
+        _uv_data(weather, pv_kw)
+        if weather
+        else {"title": "Sonnenschutz", "temperature": 0, "cloudcover": 0, "current_uv": 0, "max_uv": 0}
+    )
     uv_desc = [
         f"Temperatur | {uv['temperature']:.0f}°C",
         f"Bewölkung | {uv['cloudcover']:.0f}%",
@@ -605,7 +611,7 @@ def _build_feed() -> str:
     ]
     item_uv = _item(uv["title"], "\n".join(uv_desc), "solar-sonnenschutz")
 
-    # —— Channel ———————————————————————————————————————————————————————
+    # —— Channel ——————————————————————————————————————————————————————
     now_rfc = now.strftime("%a, %d %b %Y %H:%M:%S %z")
     return (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
