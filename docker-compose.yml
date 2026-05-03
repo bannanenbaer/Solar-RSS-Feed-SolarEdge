@@ -1,0 +1,26 @@
+services:
+  solar:
+    image: ghcr.io/bannanenbaer/solar-rss-feed-solaredge:latest
+    build: .
+    restart: unless-stopped
+    ports:
+      - "5002:5000"
+    environment:
+      - SOLAREDGE_API_KEY=${SOLAREDGE_API_KEY}
+      - SOLAREDGE_SITE_ID=${SOLAREDGE_SITE_ID}
+      - SOLAR_LAT=${SOLAR_LAT:-52.2762744}
+      - SOLAR_LON=${SOLAR_LON:-9.5671846}
+      - SOLAR_PEAK_KW=${SOLAR_PEAK_KW:-10.0}
+      - SOLAR_BATTERY_KWH=${SOLAR_BATTERY_KWH:-10.0}
+      - SOLAR_DB_PATH=/data/solar.db
+    volumes:
+      - solar-data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  solar-data:
